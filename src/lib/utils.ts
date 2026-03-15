@@ -30,3 +30,60 @@ export function generateOrderNumber(): string {
   const randPart = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `TZ-${datePart}-${randPart}`;
 }
+
+export function getDubaiDateString(): string {
+  const d = getDubaiDate();
+  return formatDateString(d);
+}
+
+export function formatDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function getDayOfWeekFromDate(dateStr: string): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).getDay();
+}
+
+import { DayInfo, DAY_SHORT } from "@/lib/types";
+
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+export function getNext14Days(): DayInfo[] {
+  const today = getDubaiDate();
+  const todayDay = today.getDay(); // day of week for today
+  const days: DayInfo[] = [];
+
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    const dayOfWeek = d.getDay();
+
+    // Determine week label based on whether we've crossed into a new week
+    // "This Week" for days until the end of the current week (Saturday)
+    // "Next Week" for the second set of 7 days
+    const weekLabel = i < (7 - todayDay + 7) % 7 + 1 || (todayDay === 0 && i < 7) ? "This Week" : "Next Week";
+
+    days.push({
+      date: formatDateString(d),
+      dayOfWeek,
+      dayName: DAY_SHORT[dayOfWeek],
+      dateNum: d.getDate(),
+      monthShort: MONTH_SHORT[d.getMonth()],
+      isToday: i === 0,
+      weekLabel: i < 7 ? "This Week" : "Next Week",
+    });
+  }
+
+  return days;
+}
+
+export function formatDateLabel(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const dayName = DAY_SHORT[date.getDay()];
+  return `${dayName}, ${MONTH_SHORT[date.getMonth()]} ${date.getDate()}`;
+}

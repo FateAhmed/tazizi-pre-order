@@ -2,16 +2,27 @@
 
 @theme {
   --color-brand: #CDDB67;
-  --color-brand-dark: #b5c24d;
-  --color-brand-light: #e0eb9a;
+  --color-brand-dark: #a8b84a;
+  --color-brand-light: #e4ed9e;
+  --color-brand-50: #f6f8e8;
   --color-cream: #F8F8D1;
   --color-cream-dark: #f0f0b8;
-  --color-charcoal: #2D2D2D;
-  --color-charcoal-light: #4A4A4A;
-  --font-sans: 'Poppins', system-ui, sans-serif;
+  --color-charcoal: #1a1a1a;
+  --color-charcoal-light: #555555;
+  --color-gray-warm: #f7f7f5;
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
 }
 
-/* Poppins from Google Fonts - loaded via next/font in layout */
+/* Reset browser autofill styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+  caret-color: #1a1a1a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
 
 html {
   scroll-behavior: smooth;
@@ -20,113 +31,101 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: #FAFAFA;
+  background-color: #ffffff;
   color: var(--color-charcoal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
+/* Hide scrollbar on horizontal scrollers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* Custom scrollbar for cart/modals */
+.thin-scrollbar::-webkit-scrollbar { width: 4px; }
+.thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.thin-scrollbar::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 2px; }
 
-::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-/* Cart drawer animation */
-.cart-drawer-overlay {
-  animation: fadeIn 0.2s ease-out;
-}
-
-.cart-drawer-panel {
-  animation: slideIn 0.3s ease-out;
-}
+/* ── Animations ───────────────────────────── */
 
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slideIn {
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
 
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes slideInUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* Location prompt animation */
-.modal-overlay {
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modal-content {
-  animation: modalIn 0.3s ease-out;
-}
-
-@keyframes modalIn {
-  from { transform: scale(0.95) translateY(10px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-/* Toast animation */
-@keyframes toastIn {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.toast-enter {
-  animation: toastIn 0.3s ease-out;
-}
-
-/* Skeleton loading */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.animate-fade-in { animation: fadeIn 0.25s ease-out; }
+.animate-fade-in-up { animation: fadeInUp 0.4s ease-out both; }
+.animate-slide-right { animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-slide-up { animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-scale-in { animation: scaleIn 0.3s ease-out; }
+
+/* Staggered card entrance */
+.animate-card-1 { animation: fadeInUp 0.4s ease-out 0.0s both; }
+.animate-card-2 { animation: fadeInUp 0.4s ease-out 0.05s both; }
+.animate-card-3 { animation: fadeInUp 0.4s ease-out 0.1s both; }
+.animate-card-4 { animation: fadeInUp 0.4s ease-out 0.15s both; }
+.animate-card-5 { animation: fadeInUp 0.4s ease-out 0.2s both; }
+.animate-card-6 { animation: fadeInUp 0.4s ease-out 0.25s both; }
+
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #f5f5f5 25%, #ececec 50%, #f5f5f5 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 8px;
 }
 
-/* Quantity button press effect */
-.qty-btn:active {
-  transform: scale(0.9);
-}
+/* Cursor — pointer on all interactive elements */
+button, [role="button"], a, summary, select, label[for] { cursor: pointer; }
+input, textarea { cursor: text; }
+button:disabled, input:disabled { cursor: not-allowed; }
 
-/* Day selector active indicator */
-.day-tab-active {
-  position: relative;
-}
+/* Press effect for interactive elements */
+.press { cursor: pointer; }
+.press:active { transform: scale(0.96); }
+.press-sm { cursor: pointer; }
+.press-sm:active { transform: scale(0.92); }
 
-.day-tab-active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 3px;
-  background: var(--color-brand);
-  border-radius: 2px;
-}
+/* Toast */
+.toast-enter { animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Overlay */
+.overlay-enter { animation: fadeIn 0.2s ease-out; }
+
+/* Drawer */
+.drawer-enter { animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Modal */
+.modal-enter { animation: scaleIn 0.3s ease-out; }
+
+/* Image hover zoom */
+.img-zoom { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.group:hover .img-zoom { transform: scale(1.06); }

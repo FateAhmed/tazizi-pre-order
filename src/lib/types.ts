@@ -9,14 +9,17 @@ export interface Location {
 export interface MenuItem {
   id: string;
   name: string;
-  nameAr?: string;
   description: string;
   price: number; // in fils (2500 = AED 25.00)
   imageUrl: string;
-  category: string;
+  category: "Bowls" | "Salads" | "Wraps" | "Plates" | "Smoothies";
   isActive: boolean;
   sortOrder: number;
-  tags?: string[];
+  tags: string[];
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
 }
 
 export interface MenuSchedule {
@@ -28,7 +31,17 @@ export interface MenuSchedule {
 export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
-  dayOfWeek: number;
+  date: string; // ISO date string e.g. "2026-03-16"
+}
+
+export interface DayInfo {
+  date: string;       // "2026-03-16"
+  dayOfWeek: number;  // 0=Sunday ... 6=Saturday
+  dayName: string;    // "Mon"
+  dateNum: number;    // 16
+  monthShort: string; // "Mar"
+  isToday: boolean;
+  weekLabel: string;  // "This Week" or "Next Week"
 }
 
 export interface CartState {
@@ -78,5 +91,7 @@ export const DAY_NAMES = [
 
 export const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
-// Weekdays for discount: Mon-Fri (1-5)
 export const WEEKDAYS = [1, 2, 3, 4, 5] as const;
+
+export const CATEGORIES = ["All", "Bowls", "Salads", "Wraps", "Plates", "Smoothies"] as const;
+export type CategoryFilter = (typeof CATEGORIES)[number];

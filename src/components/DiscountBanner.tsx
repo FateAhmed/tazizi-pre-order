@@ -8,108 +8,60 @@ export function DiscountBanner() {
 
   if (!mockDiscount.active) return null;
 
-  if (discountApplied) {
-    return (
-      <div className="mx-4 mt-3">
-        <div className="bg-brand/10 border border-brand/20 rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 bg-brand/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-4 h-4 text-brand-dark"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-brand-dark">
-              {mockDiscount.percent}% weekly discount applied!
-            </p>
-            <p className="text-xs text-gray-500">
-              You&apos;re ordering for {uniqueDays} days — great choice!
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const progressPercent =
+    uniqueDays > 0 ? Math.round((uniqueDays / mockDiscount.minDays) * 100) : 0;
+  const showProgress = !discountApplied && daysNeededForDiscount > 0 && uniqueDays > 0;
 
-  if (daysNeededForDiscount > 0 && uniqueDays > 0) {
-    const progressPercent = Math.round(
-      (uniqueDays / mockDiscount.minDays) * 100
-    );
-
-    return (
-      <div className="mx-4 mt-3">
-        <div className="bg-cream/60 border border-cream-dark/30 rounded-xl px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-brand/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <svg
-                className="w-4 h-4 text-brand-dark"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+  return (
+    <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pt-5">
+      <div className="bg-brand-50 rounded-2xl px-5 py-4 flex items-center gap-3 min-h-[56px]">
+        {/* Icon — consistent across all states */}
+        <div className="flex-shrink-0">
+          {discountApplied ? (
+            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <div className="flex-1">
-              <p className="text-xs font-medium text-charcoal">
-                Add meals for{" "}
-                <span className="text-brand-dark font-bold">
-                  {daysNeededForDiscount} more day
-                  {daysNeededForDiscount !== 1 ? "s" : ""}
-                </span>{" "}
-                to save {mockDiscount.percent}%
+          ) : (
+            <svg className="w-5 h-5 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+          )}
+        </div>
+
+        {/* Text + optional progress */}
+        <div className="flex-1 min-w-0">
+          {discountApplied ? (
+            <p className="text-sm font-semibold text-charcoal">
+              {mockDiscount.percent}% weekly discount applied!
+            </p>
+          ) : showProgress ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-charcoal">
+                <span className="font-semibold text-brand-dark">{daysNeededForDiscount} more day{daysNeededForDiscount !== 1 ? "s" : ""}</span> to save {mockDiscount.percent}%
               </p>
-              {/* Progress bar */}
-              <div className="mt-1.5 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brand rounded-full transition-all duration-500"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
+              <span className="text-xs font-bold text-charcoal-light flex-shrink-0">{uniqueDays}/{mockDiscount.minDays}</span>
+            </div>
+          ) : (
+            <p className="text-sm text-charcoal-light">
+              Order for the full week and <span className="font-semibold text-charcoal">save {mockDiscount.percent}%</span>
+            </p>
+          )}
+
+          {/* Progress bar — always rendered, hidden when not needed to avoid layout shift */}
+          <div
+            className="overflow-hidden transition-all duration-300 ease-out"
+            style={{ height: showProgress ? 8 : 0, marginTop: showProgress ? 8 : 0, opacity: showProgress ? 1 : 0 }}
+          >
+            <div className="h-2 bg-brand-light/40 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-brand to-brand-dark rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // No items yet — show passive banner
-  return (
-    <div className="mx-4 mt-3">
-      <div className="bg-cream/40 border border-cream-dark/20 rounded-xl px-4 py-2.5 flex items-center gap-2.5">
-        <svg
-          className="w-4 h-4 text-brand-dark flex-shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-          />
-        </svg>
-        <p className="text-xs text-gray-500">
-          Order for the full week and{" "}
-          <span className="font-semibold text-brand-dark">
-            save {mockDiscount.percent}%
-          </span>
-        </p>
       </div>
     </div>
   );
