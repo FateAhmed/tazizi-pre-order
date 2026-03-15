@@ -4,9 +4,11 @@ import { getMenuItemsForDay } from "@/lib/mock-data";
 import { mockDiscount } from "@/lib/mock-data";
 import { getDayOfWeekFromDate } from "@/lib/utils";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-02-25.clover",
-});
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2026-02-25.clover",
+  });
+}
 
 interface CheckoutItem {
   menuItemId: string;
@@ -95,7 +97,7 @@ export async function POST(req: NextRequest) {
       discounts.push({ coupon: coupon.id });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pre-order-five.vercel.app";
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
