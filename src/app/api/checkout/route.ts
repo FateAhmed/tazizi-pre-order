@@ -24,6 +24,7 @@ interface CheckoutBody {
 }
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
   try {
     const body: CheckoutBody = await req.json();
     const { items, customerName, customerEmail, customerPhone } = body;
