@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "WebFetch(domain:tazizi.ae)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm 2>&1 | tail -20)",
-      "Bash(mv .claude /tmp/.claude-backup && mv tazizi-preorder-scope.docx.txt /tmp/ && npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm 2>&1 | tail -20)"
-    ]
-  }
-}
