@@ -54,8 +54,7 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Something went wrong");
       }
 
-      // Clear cart and redirect to Stripe
-      clearCart();
+      // Redirect to Stripe (cart cleared on success page)
       window.location.href = data.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

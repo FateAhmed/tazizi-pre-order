@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useCart } from "@/components/CartProvider";
 
 interface SessionInfo {
   orderNumber: string;
@@ -13,6 +14,12 @@ function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [session, setSession] = useState<SessionInfo | null>(null);
+  const { clearCart } = useCart();
+
+  useEffect(() => {
+    // Clear cart on successful payment page load
+    clearCart();
+  }, [clearCart]);
 
   useEffect(() => {
     if (sessionId) {
