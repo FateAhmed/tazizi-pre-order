@@ -13,17 +13,17 @@ interface SessionInfo {
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const orderId = searchParams.get("order_id");
   const [session, setSession] = useState<SessionInfo | null>(null);
   const { clearCart } = useCart();
 
   useEffect(() => {
-    // Clear cart on successful payment page load
     clearCart();
   }, [clearCart]);
 
   useEffect(() => {
     if (sessionId) {
-      fetch(`/api/checkout/verify?session_id=${sessionId}`)
+      fetch(`/api/checkout/verify?session_id=${sessionId}&order_id=${orderId || ""}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.orderNumber) setSession(data);

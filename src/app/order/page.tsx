@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Location, CategoryFilter } from "@/lib/types";
-import { getLocationBySlug, getMenuItemsForDay } from "@/lib/mock-data";
-import { getDubaiDateString, getDayOfWeekFromDate, getNext14Days } from "@/lib/utils";
+import { Machine, Product } from "@/lib/types";
+import { getMachine, getPreOrderSettings, getProductsForDate } from "@/lib/firestore";
+import { getDubaiDateString, getNext14Days } from "@/lib/utils";
 import { Header } from "@/components/Header";
 import { DaySelector } from "@/components/DaySelector";
-import { CategoryFilterBar } from "@/components/CategoryFilter";
 import { MenuItemCard } from "@/components/MenuItemCard";
 import { DiscountBanner } from "@/components/DiscountBanner";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -19,81 +18,85 @@ function OrderPageContent() {
   const searchParams = useSearchParams();
   const locationParam = searchParams.get("location");
 
-  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+  const [machine, setMachine] = useState<Machine | null>(null);
+  const [locationId, setLocationId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(getDubaiDateString());
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [preOrderDisabled, setPreOrderDisabled] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const { setSettings } = useCart();
+
+  // Resolve location on mount
   useEffect(() => {
     setMounted(true);
-
-    if (locationParam) {
-      const loc = getLocationBySlug(locationParam);
-      if (loc) {
-        setCurrentLocation(loc);
-        localStorage.setItem("tazizi-location", loc.slug);
-        return;
-      }
+    const locId = locationParam || localStorage.getItem("tazizi-location");
+    if (locId) {
+      loadLocation(locId);
+    } else {
+      setLoadingLocation(false);
     }
+  }, [locationParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const saved = localStorage.getItem("tazizi-location");
-    if (saved) {
-      const loc = getLocationBySlug(saved);
-      if (loc) {
-        setCurrentLocation(loc);
-        return;
+  async function loadLocation(locId: string) {
+    setLoadingLocation(true);
+    try {
+      const m = await getMachine(locId);
+      if (m) {
+        setMachine(m);
+        setLocationId(locId);
+        localStorage.setItem("tazizi-location", locId);
+
+        const settings = await getPreOrderSettings(locId);
+        if (settings && !settings.preOrderEnabled) {
+          setPreOrderDisabled(true);
+          return;
+        }
+        if (settings) {
+          setSettings(settings);
+        }
+      } else {
+        // Invalid location — clear stored value
+        localStorage.removeItem("tazizi-location");
       }
+    } finally {
+      setLoadingLocation(false);
     }
-  }, [locationParam]);
+  }
+
+  // Load products when date or location changes
+  useEffect(() => {
+    if (!locationId) return;
+    setLoading(true);
+    getProductsForDate(locationId, selectedDate)
+      .then(setProducts)
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
+  }, [locationId, selectedDate]);
 
   const handleScanResult = useCallback((slug: string) => {
-    const loc = getLocationBySlug(slug);
-    if (loc) {
-      setCurrentLocation(loc);
-      localStorage.setItem("tazizi-location", loc.slug);
-      setScannerOpen(false);
-    } else {
-      setScannerOpen(false);
-      alert(`Location "${slug}" not found. Please scan a valid Tazizi QR code.`);
-    }
-  }, []);
+    setScannerOpen(false);
+    setMachine(null);
+    loadLocation(slug);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Derive dayOfWeek from selected date for menu lookup
-  const selectedDayOfWeek = useMemo(() => getDayOfWeekFromDate(selectedDate), [selectedDate]);
-
-  const allMenuItems = useMemo(() => getMenuItemsForDay(selectedDayOfWeek), [selectedDayOfWeek]);
-
-  const availableCategories = useMemo(
-    () => [...new Set(allMenuItems.map((item) => item.category))],
-    [allMenuItems]
-  );
-
-  const filteredItems = useMemo(
-    () =>
-      selectedCategory === "All"
-        ? allMenuItems
-        : allMenuItems.filter((item) => item.category === selectedCategory),
-    [allMenuItems, selectedCategory]
-  );
-
-  useEffect(() => {
-    if (selectedCategory !== "All" && !availableCategories.includes(selectedCategory)) {
-      setSelectedCategory("All");
-    }
-  }, [availableCategories, selectedCategory]);
-
-  if (!mounted) {
+  if (!mounted || loadingLocation) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-8 h-8 border-[3px] border-gray-200 border-t-brand rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-[3px] border-gray-200 border-t-brand rounded-full animate-spin" />
+        {loadingLocation && (
+          <p className="text-sm text-charcoal-light animate-fade-in">Loading your fridge...</p>
+        )}
       </div>
     );
   }
 
   // No location — show scan prompt
-  if (!currentLocation) {
+  if (!machine) {
     return (
       <>
         <div className="min-h-screen bg-white flex items-center justify-center px-6">
@@ -131,11 +134,30 @@ function OrderPageContent() {
     );
   }
 
+  // Pre-ordering disabled for this location
+  if (preOrderDisabled) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <div className="w-24 h-24 bg-gray-warm rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-charcoal mb-2">Pre-ordering unavailable</h2>
+          <p className="text-base text-charcoal-light leading-relaxed">
+            Pre-ordering is not currently available at {machine.name}. Please check back later.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white pb-28 lg:pb-8">
       <Header
         onCartClick={() => setCartOpen(true)}
-        locationName={currentLocation.name}
+        locationName={machine.name}
         onChangeLocation={() => setScannerOpen(true)}
       />
 
@@ -145,15 +167,13 @@ function OrderPageContent() {
 
       <RepeatDayBanner selectedDate={selectedDate} />
 
-      <CategoryFilterBar
-        selected={selectedCategory}
-        onSelect={setSelectedCategory}
-        availableCategories={availableCategories}
-      />
-
       {/* Menu grid */}
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pb-8">
-        {filteredItems.length === 0 ? (
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 py-6 pb-8">
+        {loading ? (
+          <div className="flex justify-center py-24">
+            <div className="w-8 h-8 border-[3px] border-gray-200 border-t-brand rounded-full animate-spin" />
+          </div>
+        ) : products.length === 0 ? (
           <div className="text-center py-24">
             <div className="w-28 h-28 bg-gray-warm rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-14 h-14 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
@@ -162,17 +182,15 @@ function OrderPageContent() {
             </div>
             <h3 className="text-xl font-semibold text-charcoal mb-2">No meals available</h3>
             <p className="text-base text-charcoal-light max-w-md mx-auto">
-              {selectedCategory !== "All"
-                ? `No ${selectedCategory.toLowerCase()} scheduled for this day. Try another category or day.`
-                : "No menu items are scheduled for this day. Try selecting another day!"}
+              No menu items are scheduled for this date. Try selecting another day!
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item, index) => (
+            {products.map((product, index) => (
               <MenuItemCard
-                key={item.id}
-                item={item}
+                key={product.id}
+                item={product}
                 date={selectedDate}
                 index={index}
               />
@@ -201,13 +219,11 @@ function RepeatDayBanner({ selectedDate }: { selectedDate: string }) {
   const { datesWithItems, copyDayToNextWeek } = useCart();
   const [copiedDate, setCopiedDate] = useState<string | null>(null);
 
-  // Check if this day is in week 1 (first 7 days) and has items
   const days = useMemo(() => getNext14Days(), []);
   const week1Dates = useMemo(() => new Set(days.slice(0, 7).map((d) => d.date)), [days]);
   const isWeek1Day = week1Dates.has(selectedDate);
   const hasItemsToday = datesWithItems.has(selectedDate);
 
-  // Compute the target date (+7 days)
   const targetDate = useMemo(() => {
     const [y, m, d] = selectedDate.split("-").map(Number);
     const shifted = new Date(y, m - 1, d);
@@ -223,7 +239,6 @@ function RepeatDayBanner({ selectedDate }: { selectedDate: string }) {
 
   const show = isWeek1Day && hasItemsToday && !targetAlreadyHasItems && targetInRange;
 
-  // Get target day label
   const targetDayInfo = days.find((d) => d.date === targetDate);
   const targetLabel = targetDayInfo
     ? `${targetDayInfo.dayName} ${targetDayInfo.dateNum} ${targetDayInfo.monthShort}`

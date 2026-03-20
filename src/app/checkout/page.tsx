@@ -14,8 +14,9 @@ export default function CheckoutPage() {
     totalItems,
     subtotal,
     discountApplied,
-    discountPercent,
+    discountPercentage,
     discountAmount,
+    vatAmount,
     total,
     getItemsByDate,
     clearCart,
@@ -38,13 +39,16 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({
-            menuItemId: i.menuItem.id,
+            productId: i.product.id,
+            productName: i.product.name,
             quantity: i.quantity,
+            unitPrice: i.product.totalPrice,
             date: i.date,
           })),
           customerName: form.name,
           customerEmail: form.email,
           customerPhone: form.phone,
+          locationId: localStorage.getItem("tazizi-location") || "",
         }),
       });
 
@@ -278,23 +282,27 @@ export default function CheckoutPage() {
                     </div>
                     <div className="px-6 lg:px-8 py-3 space-y-3">
                       {dayItems.map((cartItem) => (
-                        <div key={`${cartItem.menuItem.id}-${date}`} className="flex items-center gap-3">
+                        <div key={`${cartItem.product.id}-${date}`} className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative">
-                            <Image
-                              src={cartItem.menuItem.imageUrl}
-                              alt={cartItem.menuItem.name}
-                              fill
-                              className="object-cover"
-                              sizes="48px"
-                              unoptimized
-                            />
+                            {cartItem.product.imageUrl ? (
+                              <Image
+                                src={cartItem.product.imageUrl}
+                                alt={cartItem.product.name}
+                                fill
+                                className="object-cover"
+                                sizes="48px"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-charcoal truncate">{cartItem.menuItem.name}</p>
-                            <p className="text-xs text-charcoal-light">Qty: {cartItem.quantity} &middot; {formatPrice(cartItem.menuItem.price)} each</p>
+                            <p className="text-sm font-medium text-charcoal truncate">{cartItem.product.name}</p>
+                            <p className="text-xs text-charcoal-light">Qty: {cartItem.quantity} &middot; {formatPrice(cartItem.product.totalPrice)} each</p>
                           </div>
                           <span className="text-sm font-semibold text-charcoal tabular-nums whitespace-nowrap">
-                            {formatPrice(cartItem.menuItem.price * cartItem.quantity)}
+                            {formatPrice(cartItem.product.totalPrice * cartItem.quantity)}
                           </span>
                         </div>
                       ))}
@@ -319,7 +327,7 @@ export default function CheckoutPage() {
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>
-                      Weekly discount ({discountPercent}%)
+                      Weekly discount ({discountPercentage}%)
                     </span>
                     <span className="font-semibold text-brand-dark tabular-nums">-{formatPrice(discountAmount)}</span>
                   </div>
