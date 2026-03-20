@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { MenuItem } from "@/lib/types";
+import { Product } from "@/lib/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { useCart } from "./CartProvider";
 import { useToast } from "./ToastProvider";
 
 interface MenuItemCardProps {
-  item: MenuItem;
+  item: Product;
   date: string;
   index?: number;
 }
@@ -26,35 +26,43 @@ export function MenuItemCard({ item, date, index = 0 }: MenuItemCardProps) {
 
   return (
     <div className={cn("group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300", animClass)}>
-      {/* Image — taller on desktop */}
+      {/* Image */}
       <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
-        <Image
-          src={item.imageUrl}
-          alt={item.name}
-          fill
-          className="object-cover img-zoom"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        />
+        {item.imageUrl ? (
+          <Image
+            src={item.imageUrl}
+            alt={item.name}
+            fill
+            className="object-cover img-zoom"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-400 text-sm">No image</span>
+          </div>
+        )}
 
         {/* Calorie badge */}
-        <div className="absolute top-3 left-3">
-          <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
-            <svg className="w-4 h-4 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-            </svg>
-            <span className="text-sm font-semibold text-charcoal">{item.calories} cal</span>
+        {item.calories != null && (
+          <div className="absolute top-3 left-3">
+            <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+              <svg className="w-4 h-4 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              </svg>
+              <span className="text-sm font-semibold text-charcoal">{item.calories} cal</span>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Tags */}
-        {item.tags.length > 0 && (
+        {/* Allergens */}
+        {item.allergens?.length > 0 && (
           <div className="absolute top-3 right-3 flex gap-1.5">
-            {item.tags.slice(0, 2).map((tag) => (
+            {item.allergens.slice(0, 2).map((allergen) => (
               <span
-                key={tag}
+                key={allergen}
                 className="bg-charcoal/70 backdrop-blur-md text-white rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide"
               >
-                {tag}
+                {allergen}
               </span>
             ))}
           </div>
@@ -66,29 +74,39 @@ export function MenuItemCard({ item, date, index = 0 }: MenuItemCardProps) {
         <h3 className="font-semibold text-base text-charcoal leading-snug">
           {item.name}
         </h3>
-        <p className="text-sm text-charcoal-light mt-1.5 leading-relaxed line-clamp-2">
-          {item.description}
-        </p>
+        {item.description && (
+          <p className="text-sm text-charcoal-light mt-1.5 leading-relaxed line-clamp-2">
+            {item.description}
+          </p>
+        )}
 
         {/* Macros row */}
-        <div className="flex items-center gap-4 mt-4 text-sm">
-          <span className="text-charcoal-light">
-            <span className="font-semibold text-charcoal">{item.protein}g</span> protein
-          </span>
-          <span className="text-gray-300">|</span>
-          <span className="text-charcoal-light">
-            <span className="font-semibold text-charcoal">{item.carbs}g</span> carbs
-          </span>
-          <span className="text-gray-300">|</span>
-          <span className="text-charcoal-light">
-            <span className="font-semibold text-charcoal">{item.fat}g</span> fat
-          </span>
-        </div>
+        {(item.proteins != null || item.carbs != null || item.fats != null) && (
+          <div className="flex items-center gap-4 mt-4 text-sm">
+            {item.proteins != null && (
+              <span className="text-charcoal-light">
+                <span className="font-semibold text-charcoal">{item.proteins}g</span> protein
+              </span>
+            )}
+            {item.proteins != null && item.carbs != null && <span className="text-gray-300">|</span>}
+            {item.carbs != null && (
+              <span className="text-charcoal-light">
+                <span className="font-semibold text-charcoal">{item.carbs}g</span> carbs
+              </span>
+            )}
+            {item.carbs != null && item.fats != null && <span className="text-gray-300">|</span>}
+            {item.fats != null && (
+              <span className="text-charcoal-light">
+                <span className="font-semibold text-charcoal">{item.fats}g</span> fat
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Price + Add */}
         <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
           <span className="text-lg font-bold text-charcoal">
-            {formatPrice(item.price)}
+            {formatPrice(item.totalPrice)}
           </span>
 
           {quantity === 0 ? (

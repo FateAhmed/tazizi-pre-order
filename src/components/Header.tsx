@@ -102,6 +102,6 @@ export function Header({ onCartClick, locationName, onChangeLocation }: HeaderPr
   );
 }
 
-function formatPriceCompact(fils: number): string {
-  return `AED ${(fils / 100).toFixed(0)}`;
+function formatPriceCompact(aed: number): string {
+  return `AED ${aed % 1 === 0 ? aed : aed.toFixed(2)}`;
 }

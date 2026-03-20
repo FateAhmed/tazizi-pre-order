@@ -8,7 +8,7 @@ interface CartFooterProps {
 }
 
 export function CartFooter({ onCartClick }: CartFooterProps) {
-  const { totalItems, total, discountApplied, discountPercent } = useCart();
+  const { totalItems, total, discountApplied, discountPercentage } = useCart();
 
   if (totalItems === 0) return null;
 
@@ -28,7 +28,7 @@ export function CartFooter({ onCartClick }: CartFooterProps) {
           <div className="flex items-center gap-2.5">
             {discountApplied && (
               <span className="text-[11px] bg-brand/25 text-brand-light px-2.5 py-0.5 rounded-full font-semibold">
-                -{discountPercent}%
+                -{discountPercentage}%
               </span>
             )}
             <span className="text-[15px] font-bold">{formatPrice(total)}</span>

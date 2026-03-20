@@ -8,25 +8,27 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { CartItem, MenuItem } from "@/lib/types";
-import { mockDiscount } from "@/lib/mock-data";
-import { getDayOfWeekFromDate, getNext14Days, formatDateString } from "@/lib/utils";
+import { CartItem, Product, PreOrderSettings } from "@/lib/types";
+import { getNext14Days, formatDateString } from "@/lib/utils";
 
 interface CartContextType {
   items: CartItem[];
   totalItems: number;
   subtotal: number;
   discountApplied: boolean;
-  discountPercent: number;
+  discountPercentage: number;
   discountAmount: number;
+  vatAmount: number;
   total: number;
-  uniqueDays: number;
-  daysNeededForDiscount: number;
-  addItem: (item: MenuItem, date: string) => void;
-  removeItem: (itemId: string, date: string) => void;
-  updateQuantity: (itemId: string, date: string, quantity: number) => void;
+  totalMeals: number;
+  mealsNeededForDiscount: number;
+  settings: PreOrderSettings | null;
+  setSettings: (s: PreOrderSettings) => void;
+  addItem: (product: Product, date: string) => void;
+  removeItem: (productId: string, date: string) => void;
+  updateQuantity: (productId: string, date: string, quantity: number) => void;
   clearCart: () => void;
-  getItemQuantity: (itemId: string, date: string) => number;
+  getItemQuantity: (productId: string, date: string) => number;
   getItemsByDate: () => Map<string, CartItem[]>;
   datesWithItems: Set<string>;
   copyToNextWeek: () => void;
@@ -38,9 +40,9 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null);
 
 type Action =
-  | { type: "ADD_ITEM"; item: MenuItem; date: string }
-  | { type: "REMOVE_ITEM"; itemId: string; date: string }
-  | { type: "UPDATE_QTY"; itemId: string; date: string; quantity: number }
+  | { type: "ADD_ITEM"; product: Product; date: string }
+  | { type: "REMOVE_ITEM"; productId: string; date: string }
+  | { type: "UPDATE_QTY"; productId: string; date: string; quantity: number }
   | { type: "CLEAR" }
   | { type: "HYDRATE"; items: CartItem[] }
   | { type: "COPY_WEEK"; validDates: Set<string> }
@@ -50,33 +52,33 @@ function cartReducer(state: CartItem[], action: Action): CartItem[] {
   switch (action.type) {
     case "ADD_ITEM": {
       const existing = state.find(
-        (i) => i.menuItem.id === action.item.id && i.date === action.date
+        (i) => i.product.id === action.product.id && i.date === action.date
       );
       if (existing) {
         return state.map((i) =>
-          i.menuItem.id === action.item.id && i.date === action.date
+          i.product.id === action.product.id && i.date === action.date
             ? { ...i, quantity: i.quantity + 1 }
             : i
         );
       }
       return [
         ...state,
-        { menuItem: action.item, quantity: 1, date: action.date },
+        { product: action.product, quantity: 1, date: action.date },
       ];
     }
     case "REMOVE_ITEM":
       return state.filter(
-        (i) => !(i.menuItem.id === action.itemId && i.date === action.date)
+        (i) => !(i.product.id === action.productId && i.date === action.date)
       );
     case "UPDATE_QTY": {
       if (action.quantity <= 0) {
         return state.filter(
           (i) =>
-            !(i.menuItem.id === action.itemId && i.date === action.date)
+            !(i.product.id === action.productId && i.date === action.date)
         );
       }
       return state.map((i) =>
-        i.menuItem.id === action.itemId && i.date === action.date
+        i.product.id === action.productId && i.date === action.date
           ? { ...i, quantity: action.quantity }
           : i
       );
@@ -88,16 +90,13 @@ function cartReducer(state: CartItem[], action: Action): CartItem[] {
     case "COPY_WEEK": {
       const newItems: CartItem[] = [];
       for (const item of state) {
-        // Shift the date by +7 days
         const [y, m, d] = item.date.split("-").map(Number);
         const shifted = new Date(y, m - 1, d);
         shifted.setDate(shifted.getDate() + 7);
         const newDate = formatDateString(shifted);
-        // Only add if the target date is within our 14-day window
         if (!action.validDates.has(newDate)) continue;
-        // Skip if already exists for that date
         const alreadyExists = state.some(
-          (existing) => existing.menuItem.id === item.menuItem.id && existing.date === newDate
+          (existing) => existing.product.id === item.product.id && existing.date === newDate
         );
         if (!alreadyExists) {
           newItems.push({ ...item, date: newDate });
@@ -110,7 +109,7 @@ function cartReducer(state: CartItem[], action: Action): CartItem[] {
       const newItems: CartItem[] = [];
       for (const item of dayItems) {
         const alreadyExists = state.some(
-          (existing) => existing.menuItem.id === item.menuItem.id && existing.date === action.targetDate
+          (existing) => existing.product.id === item.product.id && existing.date === action.targetDate
         );
         if (!alreadyExists) {
           newItems.push({ ...item, date: action.targetDate });
@@ -125,8 +124,11 @@ function cartReducer(state: CartItem[], action: Action): CartItem[] {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, dispatch] = useReducer(cartReducer, []);
+  const [settingsVal, setSettingsVal] = useReducer(
+    (_: PreOrderSettings | null, s: PreOrderSettings | null) => s,
+    null
+  );
 
-  // Hydrate from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem("tazizi-cart");
@@ -137,26 +139,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch {
-      // ignore parse errors
+      // ignore
     }
   }, []);
 
-  // Persist to localStorage
   useEffect(() => {
     localStorage.setItem("tazizi-cart", JSON.stringify(items));
   }, [items]);
 
-  const addItem = useCallback((item: MenuItem, date: string) => {
-    dispatch({ type: "ADD_ITEM", item, date });
+  const addItem = useCallback((product: Product, date: string) => {
+    dispatch({ type: "ADD_ITEM", product, date });
   }, []);
 
-  const removeItem = useCallback((itemId: string, date: string) => {
-    dispatch({ type: "REMOVE_ITEM", itemId, date });
+  const removeItem = useCallback((productId: string, date: string) => {
+    dispatch({ type: "REMOVE_ITEM", productId, date });
   }, []);
 
   const updateQuantity = useCallback(
-    (itemId: string, date: string, quantity: number) => {
-      dispatch({ type: "UPDATE_QTY", itemId, date, quantity });
+    (productId: string, date: string, quantity: number) => {
+      dispatch({ type: "UPDATE_QTY", productId, date, quantity });
     },
     []
   );
@@ -176,7 +177,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const shifted = new Date(y, m - 1, d);
     shifted.setDate(shifted.getDate() + 7);
     const targetDate = formatDateString(shifted);
-    // Only copy if target is within 14-day window
     const days = getNext14Days();
     const validDates = new Set(days.map((dd) => dd.date));
     if (validDates.has(targetDate)) {
@@ -185,9 +185,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getItemQuantity = useCallback(
-    (itemId: string, date: string) => {
+    (productId: string, date: string) => {
       const item = items.find(
-        (i) => i.menuItem.id === itemId && i.date === date
+        (i) => i.product.id === productId && i.date === date
       );
       return item?.quantity ?? 0;
     },
@@ -201,15 +201,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       existing.push(item);
       map.set(item.date, existing);
     });
-    // Sort by date
-    return new Map(
-      [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
-    );
+    return new Map([...map.entries()].sort(([a], [b]) => a.localeCompare(b)));
   }, [items]);
 
   const datesWithItems = new Set(items.map((i) => i.date));
 
-  // Determine which weeks have items
   const days14 = getNext14Days();
   const week1Dates = new Set(days14.slice(0, 7).map((d) => d.date));
   const week2Dates = new Set(days14.slice(7, 14).map((d) => d.date));
@@ -218,24 +214,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce(
-    (sum, i) => sum + i.menuItem.price * i.quantity,
+    (sum, i) => sum + i.product.totalPrice * i.quantity,
     0
   );
 
-  // Discount based on unique days-of-week covered (not unique dates)
-  const uniqueDays = new Set(
-    items.map((i) => getDayOfWeekFromDate(i.date))
-  ).size;
+  // Discount based on total meal count (from preOrderSettings)
+  const totalMeals = totalItems;
   const discountApplied =
-    mockDiscount.active && uniqueDays >= mockDiscount.minDays;
-  const discountPercent = discountApplied ? mockDiscount.percent : 0;
-  const discountAmount = discountApplied
-    ? Math.round(subtotal * (mockDiscount.percent / 100))
+    !!settingsVal?.discountEnabled &&
+    totalMeals >= (settingsVal?.discountMinMeals ?? Infinity);
+  const discountPercentage = discountApplied
+    ? settingsVal!.discountPercentage
     : 0;
-  const total = subtotal - discountAmount;
+  const discountAmount = discountApplied
+    ? subtotal * (discountPercentage / 100)
+    : 0;
+  const afterDiscount = subtotal - discountAmount;
+  const vatAmount = afterDiscount - afterDiscount / 1.05;
+  const total = afterDiscount;
 
-  const daysNeededForDiscount = mockDiscount.active
-    ? Math.max(0, mockDiscount.minDays - uniqueDays)
+  const mealsNeededForDiscount = settingsVal?.discountEnabled
+    ? Math.max(0, (settingsVal.discountMinMeals ?? 0) - totalMeals)
     : 0;
 
   return (
@@ -245,11 +244,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         totalItems,
         subtotal,
         discountApplied,
-        discountPercent,
+        discountPercentage,
         discountAmount,
+        vatAmount,
         total,
-        uniqueDays,
-        daysNeededForDiscount,
+        totalMeals,
+        mealsNeededForDiscount,
+        settings: settingsVal,
+        setSettings: setSettingsVal,
         addItem,
         removeItem,
         updateQuantity,

@@ -1,21 +1,22 @@
 "use client";
 
 import { useCart } from "./CartProvider";
-import { mockDiscount } from "@/lib/mock-data";
 
 export function DiscountBanner() {
-  const { discountApplied, daysNeededForDiscount, uniqueDays } = useCart();
+  const { settings, discountApplied, mealsNeededForDiscount, totalMeals, discountPercentage } = useCart();
 
-  if (!mockDiscount.active) return null;
+  if (!settings?.discountEnabled) return null;
 
+  const minMeals = settings.discountMinMeals;
+  const percent = settings.discountPercentage;
   const progressPercent =
-    uniqueDays > 0 ? Math.round((uniqueDays / mockDiscount.minDays) * 100) : 0;
-  const showProgress = !discountApplied && daysNeededForDiscount > 0 && uniqueDays > 0;
+    totalMeals > 0 ? Math.min(100, Math.round((totalMeals / minMeals) * 100)) : 0;
+  const showProgress = !discountApplied && mealsNeededForDiscount > 0 && totalMeals > 0;
 
   return (
     <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pt-5">
       <div className="bg-brand-50 rounded-2xl px-5 py-4 flex items-center gap-3 min-h-[56px]">
-        {/* Icon — consistent across all states */}
+        {/* Icon */}
         <div className="flex-shrink-0">
           {discountApplied ? (
             <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center">
@@ -30,26 +31,25 @@ export function DiscountBanner() {
           )}
         </div>
 
-        {/* Text + optional progress */}
+        {/* Text + progress */}
         <div className="flex-1 min-w-0">
           {discountApplied ? (
             <p className="text-sm font-semibold text-charcoal">
-              {mockDiscount.percent}% weekly discount applied!
+              {discountPercentage}% discount applied!
             </p>
           ) : showProgress ? (
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm text-charcoal">
-                <span className="font-semibold text-brand-dark">{daysNeededForDiscount} more day{daysNeededForDiscount !== 1 ? "s" : ""}</span> to save {mockDiscount.percent}%
+                <span className="font-semibold text-brand-dark">{mealsNeededForDiscount} more meal{mealsNeededForDiscount !== 1 ? "s" : ""}</span> to save {percent}%
               </p>
-              <span className="text-xs font-bold text-charcoal-light flex-shrink-0">{uniqueDays}/{mockDiscount.minDays}</span>
+              <span className="text-xs font-bold text-charcoal-light flex-shrink-0">{totalMeals}/{minMeals}</span>
             </div>
           ) : (
             <p className="text-sm text-charcoal-light">
-              Order for the full week and <span className="font-semibold text-charcoal">save {mockDiscount.percent}%</span>
+              {settings.discountBannerText || `Order ${minMeals}+ meals and save ${percent}%`}
             </p>
           )}
 
-          {/* Progress bar — always rendered, hidden when not needed to avoid layout shift */}
           <div
             className="overflow-hidden transition-all duration-300 ease-out"
             style={{ height: showProgress ? 8 : 0, marginTop: showProgress ? 8 : 0, opacity: showProgress ? 1 : 0 }}
