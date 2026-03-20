@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getMenuItemsForDay } from "@/lib/mock-data";
-import { mockDiscount } from "@/lib/mock-data";
-import { getDayOfWeekFromDate } from "@/lib/utils";
+import { createPreOrder, getPreOrderSettings, calculateOrder } from "@/lib/firestore";
+import type { PreOrderItem } from "@/lib/types";
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -11,8 +10,10 @@ function getStripe() {
 }
 
 interface CheckoutItem {
-  menuItemId: string;
+  productId: string;
+  productName: string;
   quantity: number;
+  unitPrice: number;
   date: string;
 }
 
@@ -21,100 +22,129 @@ interface CheckoutBody {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  locationId: string;
 }
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
   try {
     const body: CheckoutBody = await req.json();
-    const { items, customerName, customerEmail, customerPhone } = body;
+    const { items, customerName, customerEmail, customerPhone, locationId } =
+      body;
 
-    if (!items?.length || !customerName || !customerEmail || !customerPhone) {
+    if (
+      !items?.length ||
+      !customerName ||
+      !customerEmail ||
+      !customerPhone ||
+      !locationId
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Validate items and calculate totals server-side
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
-    let subtotal = 0;
+    // Load settings for discount calculation
+    const settings = await getPreOrderSettings(locationId);
 
-    for (const cartItem of items) {
-      const dayOfWeek = getDayOfWeekFromDate(cartItem.date);
-      const menuItems = getMenuItemsForDay(dayOfWeek);
-      const menuItem = menuItems.find((m) => m.id === cartItem.menuItemId);
+    // Calculate totals server-side
+    const calc = calculateOrder(items, settings);
 
-      if (!menuItem) {
-        return NextResponse.json(
-          { error: `Item ${cartItem.menuItemId} not available for ${cartItem.date}` },
-          { status: 400 }
-        );
-      }
+    // Build pre-order items
+    const preOrderItems: PreOrderItem[] = items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      date: item.date,
+      ...(calc.discountPercentage > 0 && {
+        discountedPrice:
+          item.unitPrice * (1 - calc.discountPercentage / 100),
+        discountPercentage: calc.discountPercentage,
+      }),
+    }));
 
-      if (cartItem.quantity < 1 || cartItem.quantity > 20) {
-        return NextResponse.json(
-          { error: "Invalid quantity" },
-          { status: 400 }
-        );
-      }
+    // Get location name (from first item's context or settings)
+    const locationName = locationId; // Will be enriched by machine data later
 
-      // Format date for display
-      const [y, m, d] = cartItem.date.split("-").map(Number);
-      const dateObj = new Date(y, m - 1, d);
-      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
-      const monthName = dateObj.toLocaleDateString("en-US", { month: "short" });
+    // 1. Create preOrder doc in Firestore (pending)
+    const { orderId, orderNumber } = await createPreOrder({
+      customerName,
+      customerEmail,
+      customerPhone,
+      locationId,
+      locationName,
+      items: preOrderItems,
+      subtotal: calc.subtotal,
+      discountAmount: calc.discountAmount,
+      vatAmount: calc.vatAmount,
+      totalAmount: calc.totalAmount,
+    });
 
-      subtotal += menuItem.price * cartItem.quantity;
+    // 2. Build Stripe line items
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
+      items.map((item) => {
+        const [y, m, d] = item.date.split("-").map(Number);
+        const dateObj = new Date(y, m - 1, d);
+        const dayName = dateObj.toLocaleDateString("en-US", {
+          weekday: "short",
+        });
+        const monthName = dateObj.toLocaleDateString("en-US", {
+          month: "short",
+        });
 
-      lineItems.push({
-        price_data: {
-          currency: "aed",
-          product_data: {
-            name: menuItem.name,
-            description: `${dayName}, ${monthName} ${d} — for ${customerName}`,
+        return {
+          price_data: {
+            currency: "aed",
+            product_data: {
+              name: item.productName,
+              description: `${dayName}, ${monthName} ${d} — for ${customerName}`,
+            },
+            // Stripe expects amount in smallest unit (fils for AED)
+            unit_amount: Math.round(item.unitPrice * 100),
           },
-          unit_amount: menuItem.price, // already in fils
-        },
-        quantity: cartItem.quantity,
+          quantity: item.quantity,
+        };
       });
-    }
 
-    // Calculate discount server-side
-    const uniqueDaysOfWeek = new Set(
-      items.map((i) => getDayOfWeekFromDate(i.date))
-    ).size;
-    const discountApplied =
-      mockDiscount.active && uniqueDaysOfWeek >= mockDiscount.minDays;
-
-    // Create coupon if discount applies
+    // 3. Create discount coupon if applicable
     const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
-    if (discountApplied) {
+    if (calc.discountPercentage > 0) {
       const coupon = await stripe.coupons.create({
-        percent_off: mockDiscount.percent,
+        percent_off: calc.discountPercentage,
         duration: "once",
-        name: `Weekly Discount (${mockDiscount.percent}% off)`,
+        name: `Discount (${calc.discountPercentage}% off)`,
       });
       discounts.push({ coupon: coupon.id });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pre-order-five.vercel.app";
+    const appUrl =
+      process.env.APP_URL ||
+      "https://pre-order-five.vercel.app";
 
+    // 4. Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: customerEmail,
       line_items: lineItems,
       discounts,
       metadata: {
+        orderId,
+        orderNumber,
         customerName,
         customerPhone,
-        itemCount: String(items.length),
+        locationId,
       },
-      success_url: `${appUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${appUrl}/order-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
       cancel_url: `${appUrl}/order-cancelled`,
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      url: session.url,
+      orderId,
+      orderNumber,
+    });
   } catch (err) {
     console.error("Checkout error:", err);
     return NextResponse.json(
