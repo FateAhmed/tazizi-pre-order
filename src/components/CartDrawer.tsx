@@ -48,14 +48,6 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {items.length > 0 && (
-              <button
-                onClick={clearCart}
-                className="text-sm text-red-400 hover:text-red-600 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                Clear all
-              </button>
-            )}
             <button
               onClick={onClose}
               className="w-10 h-10 rounded-full bg-gray-warm hover:bg-gray-100 flex items-center justify-center transition-colors"

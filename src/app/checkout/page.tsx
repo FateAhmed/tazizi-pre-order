@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/CartProvider";
-import { formatPrice, formatDateLabel } from "@/lib/utils";
+import { formatPrice, formatDateLabel, isPastCutoff } from "@/lib/utils";
 import { getMachine, getPreOrderSettings } from "@/lib/firestore";
 
 export default function CheckoutPage() {
@@ -51,6 +51,14 @@ export default function CheckoutPage() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+
+    // Check cutoff — block if any item's date has passed 5 PM cutoff
+    const expiredDates = [...new Set(items.map((i) => i.date))].filter((d) => isPastCutoff(d));
+    if (expiredDates.length > 0) {
+      setError(`Ordering has closed for ${expiredDates.map((d) => formatDateLabel(d)).join(", ")}. Please remove those items and try again.`);
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/checkout", {
@@ -292,17 +300,9 @@ export default function CheckoutPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => { clearCart(); router.push("/order"); }}
-                      className="text-sm text-red-400 hover:text-red-600 font-medium transition-colors"
-                    >
-                      Clear
-                    </button>
-                    <Link href="/order" className="text-sm font-medium text-brand-dark hover:text-charcoal transition-colors">
-                      Edit
-                    </Link>
-                  </div>
+                  <Link href="/order" className="text-sm font-medium text-brand-dark hover:text-charcoal transition-colors">
+                    Edit
+                  </Link>
                 </div>
               </div>
 

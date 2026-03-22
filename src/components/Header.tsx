@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCart } from "./CartProvider";
 
 interface HeaderProps {
@@ -16,13 +17,17 @@ export function Header({ onCartClick, locationName, onChangeLocation }: HeaderPr
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 h-[60px] lg:h-[72px] flex items-center justify-between">
         {/* Left: Logo + location */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 lg:w-10 lg:h-10 bg-brand rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
-            <span className="text-white font-bold text-base lg:text-lg">T</span>
+          <div className="w-[90px] lg:w-[110px] flex-shrink-0">
+            <Image
+              src="/tazizi-logo.svg"
+              alt="Tazizi"
+              width={110}
+              height={42}
+              className="w-full h-auto invert"
+              priority
+            />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg lg:text-xl font-bold leading-none tracking-tight text-charcoal">
-              Tazizi
-            </h1>
             {locationName ? (
               <div className="flex items-center gap-1 mt-0.5">
                 <svg className="w-3 h-3 text-brand-dark flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

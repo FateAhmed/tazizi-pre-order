@@ -42,22 +42,21 @@ export function MenuItemCard({ item, date, index = 0 }: MenuItemCardProps) {
           </div>
         )}
 
-        {/* Calorie + weight badge */}
-        {(item.calories != null || item.weight != null) && (
-          <div className="absolute top-3 left-3 flex gap-1.5">
-            {item.calories != null && item.weight != null && item.weight > 0 && (
-              <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
-                <svg className="w-4 h-4 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                </svg>
-                <span className="text-sm font-semibold text-charcoal">{Math.round((item.calories / item.weight) * 100)} cal/100g</span>
-              </div>
-            )}
-            {item.weight != null && item.weight > 0 && (
-              <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm">
-                <span className="text-sm font-semibold text-charcoal">{item.weight}g</span>
-              </div>
-            )}
+        {/* Protein badge — top left */}
+        {item.proteins != null && (
+          <div className="absolute top-3 left-3">
+            <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm">
+              <span className="text-sm font-semibold text-charcoal">{item.proteins}g protein</span>
+            </div>
+          </div>
+        )}
+
+        {/* Weight badge — top right */}
+        {item.weight != null && item.weight > 0 && (
+          <div className="absolute top-3 right-3">
+            <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm">
+              <span className="text-sm font-semibold text-charcoal">{item.weight}g</span>
+            </div>
           </div>
         )}
 
@@ -74,15 +73,15 @@ export function MenuItemCard({ item, date, index = 0 }: MenuItemCardProps) {
           </p>
         )}
 
-        {/* Macros row */}
-        {(item.proteins != null || item.carbs != null || item.fats != null) && (
+        {/* Macros row — cal, carbs, fat */}
+        {(item.calories != null || item.carbs != null || item.fats != null) && (
           <div className="flex items-center gap-4 mt-4 text-sm">
-            {item.proteins != null && (
+            {item.calories != null && (
               <span className="text-charcoal-light">
-                <span className="font-semibold text-charcoal">{item.proteins}g</span> protein
+                <span className="font-semibold text-charcoal">{item.calories}</span> cal
               </span>
             )}
-            {item.proteins != null && item.carbs != null && <span className="text-gray-300">|</span>}
+            {item.calories != null && item.carbs != null && <span className="text-gray-300">|</span>}
             {item.carbs != null && (
               <span className="text-charcoal-light">
                 <span className="font-semibold text-charcoal">{item.carbs}g</span> carbs
@@ -97,10 +96,10 @@ export function MenuItemCard({ item, date, index = 0 }: MenuItemCardProps) {
           </div>
         )}
 
-        {/* Allergens */}
+        {/* Allergens — dash separated */}
         {item.allergens?.length > 0 && (
           <p className="text-xs text-gray-400 mt-2">
-            Allergens: {item.allergens.join(", ")}
+            {item.allergens.join(" – ")}
           </p>
         )}
 

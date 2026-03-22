@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Machine, Product } from "@/lib/types";
-import { getMachine, getPreOrderSettings, getProductsForDate } from "@/lib/firestore";
+import { getMachine, getPreOrderSettings, getProductsForDate, getCategories, type FirestoreCategory } from "@/lib/firestore";
+import { CategoryFilter } from "@/components/CategoryFilter";
 import { getNext14Days, isPastCutoff } from "@/lib/utils";
 import { Header } from "@/components/Header";
 import { DaySelector } from "@/components/DaySelector";
@@ -26,6 +27,8 @@ function OrderPageContent() {
     return firstAvailable?.date || days[0].date;
   });
   const [products, setProducts] = useState<Product[]>([]);
+  const [allCategories, setAllCategories] = useState<FirestoreCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [preOrderDisabled, setPreOrderDisabled] = useState(false);
@@ -63,6 +66,10 @@ function OrderPageContent() {
         if (settings) {
           setSettings(settings);
         }
+
+        // Load categories
+        const cats = await getCategories();
+        setAllCategories(cats);
       } else {
         // Invalid location — clear stored value
         localStorage.removeItem("tazizi-location");
@@ -176,10 +183,14 @@ function OrderPageContent() {
 
       <DiscountBanner />
 
-      <RepeatDayBanner selectedDate={selectedDate} />
+      <CategoryFilter
+        categories={allCategories}
+        selected={selectedCategory}
+        onSelect={setSelectedCategory}
+      />
 
       {/* Menu grid */}
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 py-6 pb-8">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pb-8">
         {loading ? (
           <div className="flex justify-center py-24">
             <div className="w-8 h-8 border-[3px] border-gray-200 border-t-brand rounded-full animate-spin" />
@@ -198,7 +209,9 @@ function OrderPageContent() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product, index) => (
+            {products
+              .filter((p) => !selectedCategory || p.categoryId === selectedCategory)
+              .map((product, index) => (
               <MenuItemCard
                 key={product.id}
                 item={product}

@@ -22,6 +22,29 @@ import type {
   PreOrderItem,
 } from "./types";
 
+// ─── Categories ────────────────────────────────────────────
+
+export interface FirestoreCategory {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export async function getCategories(): Promise<FirestoreCategory[]> {
+  const q = query(
+    collection(db, "categories"),
+    where("isActive", "==", true),
+    where("status", "==", 1),
+    orderBy("sortOrder", "asc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({
+    id: d.id,
+    ...(d.data() as Omit<FirestoreCategory, "id">),
+  }));
+}
+
 // ─── Machines (Locations) ──────────────────────────────────
 
 export async function getMachine(locationId: string): Promise<Machine | null> {

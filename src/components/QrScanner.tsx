@@ -75,8 +75,8 @@ export function QrScanner({ onScan, onClose }: QrScannerProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4">
         <div>
-          <h2 className="text-white text-lg font-bold">Scan QR Code</h2>
-          <p className="text-white/50 text-sm">Point your camera at the fridge QR code</p>
+          <h2 className="text-white text-lg font-bold">Scan QR Code on Fridge</h2>
+          <p className="text-white/50 text-sm">Point your camera at the QR code</p>
         </div>
         <button
           onClick={() => {

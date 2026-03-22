@@ -48,6 +48,7 @@ export interface Product {
   allergens: string[];
   ingredients: string[];
   productType: string;
+  categoryId?: string;
   isActive: boolean;
   status: number;               // 1=active
 }
