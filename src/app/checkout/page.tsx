@@ -53,7 +53,8 @@ export default function CheckoutPage() {
     setError(null);
 
     // Check cutoff — block if any item's date has passed 5 PM cutoff
-    const expiredDates = [...new Set(items.map((i) => i.date))].filter((d) => isPastCutoff(d));
+    const cutoff = settings?.cutoffHours ?? 18;
+    const expiredDates = [...new Set(items.map((i) => i.date))].filter((d) => isPastCutoff(d, cutoff));
     if (expiredDates.length > 0) {
       setError(`Ordering has closed for ${expiredDates.map((d) => formatDateLabel(d)).join(", ")}. Please remove those items and try again.`);
       setSubmitting(false);

@@ -36,7 +36,7 @@ function OrderPageContent() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const { setSettings } = useCart();
+  const { setSettings, settings } = useCart();
 
   // Resolve location on mount
   useEffect(() => {
@@ -175,11 +175,16 @@ function OrderPageContent() {
       {/* Instruction banner */}
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pt-4 pb-1">
         <p className="text-sm text-charcoal-light text-center">
-          Pre-order by <span className="font-semibold text-charcoal">5 PM</span> for next-day pickup from your Tazizi fridge.
+          Pre-order by <span className="font-semibold text-charcoal">{(() => {
+            const h = 24 - (settings?.cutoffHours ?? 18);
+            const ampm = h >= 12 ? "PM" : "AM";
+            const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+            return `${h12} ${ampm}`;
+          })()}</span> for next-day pickup from your Tazizi fridge.
         </p>
       </div>
 
-      <DaySelector selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+      <DaySelector selectedDate={selectedDate} onSelectDate={setSelectedDate} cutoffHours={settings?.cutoffHours} />
 
       <DiscountBanner />
 

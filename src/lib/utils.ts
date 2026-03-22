@@ -71,28 +71,29 @@ export function getNext14Days(): DayInfo[] {
 
 /**
  * Check if ordering is still open for a given date.
- * Cutoff is 5 PM Dubai time the day before.
+ * cutoffHours = hours before pickup date (midnight) to stop accepting.
+ * e.g. cutoffHours=18, pickup=March 21 → cutoff = March 20 06:00 AM
  */
-export function isPastCutoff(dateStr: string, cutoffHour: number = 17): boolean {
+export function isPastCutoff(dateStr: string, cutoffHours: number = 18): boolean {
   const now = getDubaiDate();
   const [y, m, d] = dateStr.split("-").map(Number);
-  const pickupDate = new Date(y, m - 1, d);
-  // Cutoff = pickupDate minus 1 day at cutoffHour:00
-  const cutoff = new Date(pickupDate);
-  cutoff.setDate(cutoff.getDate() - 1);
-  cutoff.setHours(cutoffHour, 0, 0, 0);
+  const pickupDate = new Date(y, m - 1, d, 0, 0, 0, 0);
+  const cutoff = new Date(pickupDate.getTime() - cutoffHours * 60 * 60 * 1000);
   return now >= cutoff;
 }
 
 /**
- * Returns time remaining until cutoff for the nearest orderable date.
- * Returns null if no countdown needed.
+ * Returns time remaining until cutoff for the nearest orderable date (tomorrow).
+ * cutoffHours = hours before pickup midnight.
  */
-export function getCutoffCountdown(cutoffHour: number = 17): { hours: number; minutes: number } | null {
+export function getCutoffCountdown(cutoffHours: number = 18): { hours: number; minutes: number } | null {
   const now = getDubaiDate();
-  // Cutoff for tomorrow = today at cutoffHour
-  const cutoff = new Date(now);
-  cutoff.setHours(cutoffHour, 0, 0, 0);
+  // Tomorrow at midnight
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  // Cutoff for tomorrow
+  const cutoff = new Date(tomorrow.getTime() - cutoffHours * 60 * 60 * 1000);
 
   if (now >= cutoff) return null; // Already past cutoff for tomorrow
 

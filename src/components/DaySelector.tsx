@@ -7,19 +7,20 @@ import { useCart } from "./CartProvider";
 interface DaySelectorProps {
   selectedDate: string;
   onSelectDate: (date: string) => void;
+  cutoffHours?: number;
 }
 
-export function DaySelector({ selectedDate, onSelectDate }: DaySelectorProps) {
+export function DaySelector({ selectedDate, onSelectDate, cutoffHours = 18 }: DaySelectorProps) {
   const { datesWithItems } = useCart();
   const scrollRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const days = useMemo(() => getNext14Days(), []);
-  const [countdown, setCountdown] = useState(getCutoffCountdown());
+  const [countdown, setCountdown] = useState(getCutoffCountdown(cutoffHours));
 
   // Update countdown every minute
   useEffect(() => {
     const interval = setInterval(() => {
-      setCountdown(getCutoffCountdown());
+      setCountdown(getCutoffCountdown(cutoffHours));
     }, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -67,7 +68,7 @@ export function DaySelector({ selectedDate, onSelectDate }: DaySelectorProps) {
             const isSelected = selectedDate === day.date;
             const hasItems = datesWithItems.has(day.date);
             const isWeekStart = index === 7;
-            const disabled = isPastCutoff(day.date);
+            const disabled = isPastCutoff(day.date, cutoffHours);
 
             return (
               <button
