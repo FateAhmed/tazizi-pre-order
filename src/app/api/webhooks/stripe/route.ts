@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { updatePreOrderPayment } from "@/lib/firestore";
+import { updatePreOrderPayment, getPreOrder } from "@/lib/firestore";
+import { sendOrderConfirmation } from "@/lib/email";
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -52,6 +53,27 @@ export async function POST(req: NextRequest) {
         (session.payment_intent as string) || ""
       );
       console.log(`Webhook: Order ${orderId} marked as paid`);
+
+      // Send confirmation email
+      try {
+        const order = await getPreOrder(orderId);
+        if (order) {
+          await sendOrderConfirmation({
+            customerName: order.customerName,
+            customerEmail: order.customerEmail,
+            orderNumber: order.orderNumber,
+            items: order.items,
+            subtotal: order.subtotal,
+            discountAmount: order.discountAmount,
+            vatAmount: order.vatAmount,
+            totalAmount: order.totalAmount,
+            locationName: order.locationName,
+          });
+          console.log(`Webhook: Confirmation email sent to ${order.customerEmail}`);
+        }
+      } catch (emailErr) {
+        console.error(`Webhook: Email failed for order ${orderId}:`, emailErr);
+      }
     } catch (err) {
       console.error(`Webhook: Failed to update order ${orderId}:`, err);
     }

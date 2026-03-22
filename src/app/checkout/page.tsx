@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice, formatDateLabel } from "@/lib/utils";
+import { getMachine, getPreOrderSettings } from "@/lib/firestore";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const [locationName, setLocationName] = useState<string | null>(null);
+
   const {
     items,
     totalItems,
@@ -20,7 +23,23 @@ export default function CheckoutPage() {
     total,
     getItemsByDate,
     clearCart,
+    settings,
+    setSettings,
   } = useCart();
+
+  useEffect(() => {
+    const locId = localStorage.getItem("tazizi-location");
+    if (locId) {
+      getMachine(locId).then((m) => {
+        if (m) setLocationName(m.name);
+      });
+      if (!settings) {
+        getPreOrderSettings(locId).then((s) => {
+          if (s) setSettings(s);
+        });
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -264,10 +283,26 @@ export default function CheckoutPage() {
                     <p className="text-sm text-charcoal-light mt-0.5">
                       {totalItems} meal{totalItems !== 1 ? "s" : ""} &middot; {uniqueDays} day{uniqueDays !== 1 ? "s" : ""}
                     </p>
+                    {locationName && (
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <svg className="w-3.5 h-3.5 text-brand-dark flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs font-medium text-charcoal-light">{locationName}</span>
+                      </div>
+                    )}
                   </div>
-                  <Link href="/order" className="text-sm font-medium text-brand-dark hover:text-charcoal transition-colors">
-                    Edit
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => { clearCart(); router.push("/order"); }}
+                      className="text-sm text-red-400 hover:text-red-600 font-medium transition-colors"
+                    >
+                      Clear
+                    </button>
+                    <Link href="/order" className="text-sm font-medium text-brand-dark hover:text-charcoal transition-colors">
+                      Edit
+                    </Link>
+                  </div>
                 </div>
               </div>
 
@@ -332,6 +367,10 @@ export default function CheckoutPage() {
                     <span className="font-semibold text-brand-dark tabular-nums">-{formatPrice(discountAmount)}</span>
                   </div>
                 )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-charcoal-light">VAT (5% included)</span>
+                  <span className="font-medium text-charcoal tabular-nums">{formatPrice(vatAmount)}</span>
+                </div>
                 <div className="flex justify-between text-xl font-bold pt-4 border-t border-gray-200">
                   <span>Total</span>
                   <span className="tabular-nums">{formatPrice(total)}</span>

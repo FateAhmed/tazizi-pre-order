@@ -42,31 +42,25 @@ export function MenuItemCard({ item, date, index = 0 }: MenuItemCardProps) {
           </div>
         )}
 
-        {/* Calorie badge */}
-        {item.calories != null && (
-          <div className="absolute top-3 left-3">
-            <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
-              <svg className="w-4 h-4 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-              </svg>
-              <span className="text-sm font-semibold text-charcoal">{item.calories} cal</span>
-            </div>
+        {/* Calorie + weight badge */}
+        {(item.calories != null || item.weight != null) && (
+          <div className="absolute top-3 left-3 flex gap-1.5">
+            {item.calories != null && item.weight != null && item.weight > 0 && (
+              <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+                <svg className="w-4 h-4 text-brand-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                </svg>
+                <span className="text-sm font-semibold text-charcoal">{Math.round((item.calories / item.weight) * 100)} cal/100g</span>
+              </div>
+            )}
+            {item.weight != null && item.weight > 0 && (
+              <div className="bg-white/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-sm">
+                <span className="text-sm font-semibold text-charcoal">{item.weight}g</span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Allergens */}
-        {item.allergens?.length > 0 && (
-          <div className="absolute top-3 right-3 flex gap-1.5">
-            {item.allergens.slice(0, 2).map((allergen) => (
-              <span
-                key={allergen}
-                className="bg-charcoal/70 backdrop-blur-md text-white rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide"
-              >
-                {allergen}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Content */}
@@ -101,6 +95,13 @@ export function MenuItemCard({ item, date, index = 0 }: MenuItemCardProps) {
               </span>
             )}
           </div>
+        )}
+
+        {/* Allergens */}
+        {item.allergens?.length > 0 && (
+          <p className="text-xs text-gray-400 mt-2">
+            Allergens: {item.allergens.join(", ")}
+          </p>
         )}
 
         {/* Price + Add */}

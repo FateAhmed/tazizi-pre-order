@@ -18,6 +18,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     discountApplied,
     discountPercentage,
     discountAmount,
+    vatAmount,
     total,
     updateQuantity,
     clearCart,
@@ -171,6 +172,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <span className="font-semibold tabular-nums">-{formatPrice(discountAmount)}</span>
               </div>
             )}
+
+            <div className="flex justify-between text-sm">
+              <span className="text-charcoal-light">VAT (5% included)</span>
+              <span className="font-medium text-charcoal tabular-nums">{formatPrice(vatAmount)}</span>
+            </div>
 
             <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-100">
               <span>Total</span>

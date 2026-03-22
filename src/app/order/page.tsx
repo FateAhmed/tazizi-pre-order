@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Machine, Product } from "@/lib/types";
 import { getMachine, getPreOrderSettings, getProductsForDate } from "@/lib/firestore";
-import { getDubaiDateString, getNext14Days } from "@/lib/utils";
+import { getNext14Days, isPastCutoff } from "@/lib/utils";
 import { Header } from "@/components/Header";
 import { DaySelector } from "@/components/DaySelector";
 import { MenuItemCard } from "@/components/MenuItemCard";
@@ -20,7 +20,11 @@ function OrderPageContent() {
 
   const [machine, setMachine] = useState<Machine | null>(null);
   const [locationId, setLocationId] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState(getDubaiDateString());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const days = getNext14Days();
+    const firstAvailable = days.find((d) => !isPastCutoff(d.date));
+    return firstAvailable?.date || days[0].date;
+  });
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(true);
@@ -161,6 +165,13 @@ function OrderPageContent() {
         onChangeLocation={() => setScannerOpen(true)}
       />
 
+      {/* Instruction banner */}
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pt-4 pb-1">
+        <p className="text-sm text-charcoal-light text-center">
+          Pre-order by <span className="font-semibold text-charcoal">5 PM</span> for next-day pickup from your Tazizi fridge.
+        </p>
+      </div>
+
       <DaySelector selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
       <DiscountBanner />
@@ -216,7 +227,7 @@ function OrderPageContent() {
 }
 
 function RepeatDayBanner({ selectedDate }: { selectedDate: string }) {
-  const { datesWithItems, copyDayToNextWeek } = useCart();
+  const { datesWithItems, copyDayToNextWeek, items } = useCart();
   const [copiedDate, setCopiedDate] = useState<string | null>(null);
 
   const days = useMemo(() => getNext14Days(), []);
@@ -264,7 +275,7 @@ function RepeatDayBanner({ selectedDate }: { selectedDate: string }) {
             </svg>
           </div>
           <p className="text-sm text-white/80">
-            Same for <span className="font-semibold text-white">{targetLabel}</span>?
+            Order same {items.filter(i => i.date === selectedDate).reduce((s, i) => s + i.quantity, 0)} meal{items.filter(i => i.date === selectedDate).reduce((s, i) => s + i.quantity, 0) !== 1 ? "s" : ""} for <span className="font-semibold text-white">{targetLabel}</span>?
           </p>
         </div>
         <button

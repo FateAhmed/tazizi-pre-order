@@ -41,12 +41,17 @@ export function getDayOfWeekFromDate(dateStr: string): number {
 
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+/**
+ * Returns 14 orderable days starting from tomorrow.
+ * Each day includes a `pastCutoff` flag based on 5 PM Dubai cutoff.
+ */
 export function getNext14Days(): DayInfo[] {
-  const today = getDubaiDate();
+  const now = getDubaiDate();
   const days: DayInfo[] = [];
 
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(today);
+  // Start from tomorrow (i=1), 14 days
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(now);
     d.setDate(d.getDate() + i);
     const dayOfWeek = d.getDay();
 
@@ -56,12 +61,45 @@ export function getNext14Days(): DayInfo[] {
       dayName: DAY_SHORT[dayOfWeek],
       dateNum: d.getDate(),
       monthShort: MONTH_SHORT[d.getMonth()],
-      isToday: i === 0,
-      weekLabel: i < 7 ? "This Week" : "Next Week",
+      isToday: false,
+      weekLabel: i <= 7 ? "This Week" : "Next Week",
     });
   }
 
   return days;
+}
+
+/**
+ * Check if ordering is still open for a given date.
+ * Cutoff is 5 PM Dubai time the day before.
+ */
+export function isPastCutoff(dateStr: string, cutoffHour: number = 17): boolean {
+  const now = getDubaiDate();
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const pickupDate = new Date(y, m - 1, d);
+  // Cutoff = pickupDate minus 1 day at cutoffHour:00
+  const cutoff = new Date(pickupDate);
+  cutoff.setDate(cutoff.getDate() - 1);
+  cutoff.setHours(cutoffHour, 0, 0, 0);
+  return now >= cutoff;
+}
+
+/**
+ * Returns time remaining until cutoff for the nearest orderable date.
+ * Returns null if no countdown needed.
+ */
+export function getCutoffCountdown(cutoffHour: number = 17): { hours: number; minutes: number } | null {
+  const now = getDubaiDate();
+  // Cutoff for tomorrow = today at cutoffHour
+  const cutoff = new Date(now);
+  cutoff.setHours(cutoffHour, 0, 0, 0);
+
+  if (now >= cutoff) return null; // Already past cutoff for tomorrow
+
+  const diff = cutoff.getTime() - now.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return { hours, minutes };
 }
 
 export function formatDateLabel(dateStr: string): string {
