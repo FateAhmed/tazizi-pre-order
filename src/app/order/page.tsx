@@ -175,7 +175,7 @@ function OrderPageContent() {
 
       {/* Instruction banner */}
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pt-4 pb-1">
-        <p className="text-sm text-charcoal-light text-center whitespace-nowrap">
+        <p className="text-xs sm:text-sm text-charcoal-light text-center">
           Preorder by <span className="font-semibold text-charcoal">5pm</span> for next day delivery to your Tazizi fridge
         </p>
       </div>
