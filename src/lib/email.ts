@@ -30,125 +30,122 @@ export async function sendOrderConfirmation(params: OrderConfirmationParams) {
   const itemRows = params.items
     .map(
       (i) =>
-        `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f5f5f5">
-          <div style="flex:1">
-            <p style="margin:0;font-size:14px;font-weight:600;color:#1a1a1a">${i.productName}</p>
-            <p style="margin:3px 0 0;font-size:12px;color:#999">${i.date} &middot; Qty: ${i.quantity}</p>
-          </div>
-          <span style="font-size:14px;font-weight:600;color:#1a1a1a;margin-left:12px">AED ${(i.unitPrice * i.quantity).toFixed(2)}</span>
-        </div>`
+        `<tr>
+          <td style="padding:10px 0;border-bottom:1px solid #e8e8e4;font-size:14px;color:#1C382C;font-weight:600">${i.productName}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e8e8e4;font-size:13px;color:#666;text-align:center">${i.date}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e8e8e4;font-size:13px;color:#666;text-align:center">${i.quantity}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e8e8e4;font-size:14px;color:#1C382C;font-weight:600;text-align:right">AED ${(i.unitPrice * i.quantity).toFixed(2)}</td>
+        </tr>`
     )
     .join("");
 
-  const html = `
-<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-<div style="max-width:520px;margin:0 auto;padding:24px 16px">
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff">
+<tr><td align="center" style="padding:24px 16px">
+<table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%">
 
-  <div style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
+  <!-- Header -->
+  <tr><td style="background:#1C382C;padding:36px 28px 32px;text-align:center;border-radius:20px 20px 0 0">
+    <img src="${appUrl}/tazizi-logo.svg" alt="Tazizi" width="130" style="margin-bottom:24px;filter:brightness(0) invert(1)" />
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><div style="width:40px;height:2px;background:#BED13A;border-radius:1px"></div></td></tr></table>
+    <h1 style="margin:20px 0 0;font-size:20px;color:#ffffff;font-weight:600;letter-spacing:0.5px">YOUR ORDER IS CONFIRMED</h1>
+    <p style="margin:10px 0 0;color:rgba(255,255,255,0.5);font-size:13px;letter-spacing:0.5px">${params.orderNumber}</p>
+  </td></tr>
 
-    <div style="background:#1a1a1a;padding:36px 28px 32px;text-align:center">
-      <img src="${appUrl}/tazizi-logo.svg" alt="Tazizi" width="120" style="margin-bottom:24px" />
-      <div style="width:40px;height:2px;background:#CDDB67;margin:0 auto 20px;border-radius:1px"></div>
-      <h1 style="margin:0;font-size:20px;color:#ffffff;font-weight:600;letter-spacing:0.5px">YOUR ORDER IS CONFIRMED</h1>
-      <p style="margin:10px 0 0;color:rgba(255,255,255,0.5);font-size:13px;letter-spacing:0.5px">${params.orderNumber}</p>
-    </div>
+  <!-- Body -->
+  <tr><td style="background:#ffffff;padding:0;border-left:1px solid #f0f0f0;border-right:1px solid #f0f0f0">
 
+    <!-- Greeting -->
     <div style="padding:28px 28px 0">
       <p style="margin:0;font-size:15px;color:#444;line-height:1.6">
-        Hi <strong style="color:#1a1a1a">${params.customerName}</strong>, your meals are being prepared. Here&rsquo;s your order summary.
+        Hi <strong style="color:#1C382C">${params.customerName}</strong>, your meals are being prepared. Here's your order summary.
       </p>
     </div>
 
+    <!-- Pickup Location -->
     <div style="padding:20px 28px">
-      <div style="background:#f8f8f1;border-radius:14px;padding:16px 20px">
-        <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:600">Pickup from</p>
-        <p style="margin:4px 0 0;font-size:15px;font-weight:700;color:#1a1a1a">${params.locationName}</p>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FEC2;border-radius:14px"><tr><td style="padding:16px 20px">
+        <p style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#099358;font-weight:700">Delivery Location</p>
+        <p style="margin:4px 0 0;font-size:15px;font-weight:700;color:#1C382C">${params.locationName} Fridge</p>
+      </td></tr></table>
     </div>
 
     <div style="padding:0 28px"><div style="border-top:1px solid #f0f0f0"></div></div>
 
+    <!-- Items -->
     <div style="padding:20px 28px">
-      <p style="margin:0 0 16px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:700">Your meals</p>
-      ${itemRows}
+      <p style="margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#099358;font-weight:700">Your meals</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="padding:8px 0;text-align:left;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #1C382C">Item</th>
+            <th style="padding:8px 0;text-align:center;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #1C382C">Date</th>
+            <th style="padding:8px 0;text-align:center;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #1C382C">Qty</th>
+            <th style="padding:8px 0;text-align:right;font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #1C382C">Price</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
     </div>
 
     <div style="padding:0 28px"><div style="border-top:1px solid #f0f0f0"></div></div>
 
+    <!-- Totals -->
     <div style="padding:20px 28px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;color:#999">Subtotal</span>
-        <span style="font-size:13px;color:#1a1a1a">AED ${params.subtotal.toFixed(2)}</span>
-      </div>
-      ${params.discountAmount > 0 ? `
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;color:#8BA53E;font-weight:600">Discount</span>
-        <span style="font-size:13px;color:#8BA53E;font-weight:600">-AED ${params.discountAmount.toFixed(2)}</span>
-      </div>` : ""}
-      <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-        <span style="font-size:13px;color:#999">VAT (5% included)</span>
-        <span style="font-size:13px;color:#1a1a1a">AED ${params.vatAmount.toFixed(2)}</span>
-      </div>
-      <div style="border-top:2px solid #1a1a1a;padding-top:12px;display:flex;justify-content:space-between">
-        <span style="font-size:17px;font-weight:800;color:#1a1a1a">Total Paid</span>
-        <span style="font-size:17px;font-weight:800;color:#1a1a1a">AED ${params.totalAmount.toFixed(2)}</span>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:4px 0;font-size:13px;color:#999">Subtotal</td>
+          <td style="padding:4px 0;font-size:13px;color:#1C382C;text-align:right">AED ${params.subtotal.toFixed(2)}</td>
+        </tr>
+        ${params.discountAmount > 0 ? `
+        <tr>
+          <td style="padding:4px 0;font-size:13px;color:#099358;font-weight:600">Discount</td>
+          <td style="padding:4px 0;font-size:13px;color:#099358;font-weight:600;text-align:right">-AED ${params.discountAmount.toFixed(2)}</td>
+        </tr>` : ""}
+        <tr>
+          <td style="padding:4px 0;font-size:13px;color:#999">VAT (5% included)</td>
+          <td style="padding:4px 0;font-size:13px;color:#1C382C;text-align:right">AED ${params.vatAmount.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding:12px 0 0"><div style="border-top:2px solid #1C382C"></div></td>
+        </tr>
+        <tr>
+          <td style="padding:12px 0 0;font-size:17px;font-weight:800;color:#1C382C">Total Paid</td>
+          <td style="padding:12px 0 0;font-size:17px;font-weight:800;color:#1C382C;text-align:right">AED ${params.totalAmount.toFixed(2)}</td>
+        </tr>
+      </table>
     </div>
 
     <div style="padding:0 28px"><div style="border-top:1px solid #f0f0f0"></div></div>
 
+    <!-- What's Next -->
     <div style="padding:24px 28px 28px">
-      <p style="margin:0 0 16px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:700">What&rsquo;s next</p>
-
-      <div style="display:flex;align-items:flex-start;margin-bottom:14px">
-        <div style="width:28px;height:28px;background:#f8f8f1;border-radius:8px;text-align:center;line-height:28px;margin-right:12px;flex-shrink:0">
-          <span style="font-size:13px">&#127859;</span>
-        </div>
-        <div>
-          <p style="margin:0;font-size:13px;font-weight:600;color:#1a1a1a">Freshly prepared</p>
-          <p style="margin:2px 0 0;font-size:12px;color:#999">Your meals will be made fresh for each pickup date</p>
-        </div>
-      </div>
-
-      <div style="display:flex;align-items:flex-start;margin-bottom:14px">
-        <div style="width:28px;height:28px;background:#f8f8f1;border-radius:8px;text-align:center;line-height:28px;margin-right:12px;flex-shrink:0">
-          <span style="font-size:13px">&#128205;</span>
-        </div>
-        <div>
-          <p style="margin:0;font-size:13px;font-weight:600;color:#1a1a1a">Grab from your fridge</p>
-          <p style="margin:2px 0 0;font-size:12px;color:#999">Your meals will be stocked at ${params.locationName}</p>
-        </div>
-      </div>
-
-      <div style="display:flex;align-items:flex-start">
-        <div style="width:28px;height:28px;background:#f8f8f1;border-radius:8px;text-align:center;line-height:28px;margin-right:12px;flex-shrink:0">
-          <span style="font-size:13px">&#127991;</span>
-        </div>
-        <div>
-          <p style="margin:0;font-size:13px;font-weight:600;color:#1a1a1a">Look for your label</p>
-          <p style="margin:2px 0 0;font-size:12px;color:#999">Each meal is labelled <strong>${params.customerName}</strong> — just grab and go</p>
-        </div>
-      </div>
+      <p style="margin:0 0 16px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#099358;font-weight:700">What's next</p>
+      <p style="margin:0 0 10px;font-size:13px;color:#1C382C"><strong>1.</strong> Your meals will be freshly prepared for each pickup date</p>
+      <p style="margin:0 0 10px;font-size:13px;color:#1C382C"><strong>2.</strong> Grab from <strong>${params.locationName} Fridge</strong></p>
+      <p style="margin:0;font-size:13px;color:#1C382C"><strong>3.</strong> Look for the label with your name: <strong>${params.customerName}</strong></p>
     </div>
-  </div>
 
-  <div style="text-align:center;padding:28px 0 16px">
-    <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#1a1a1a">Tazizi</p>
-    <p style="margin:0;font-size:12px;color:#999">Healthy. Fresh. Fast.</p>
-    <p style="margin:12px 0 0;font-size:11px;color:#ccc">Questions? Reply to this email or reach us at hello@tazizi.ae</p>
-  </div>
+  </td></tr>
 
-</div>
-</body>
-</html>
-  `;
+  <!-- Footer -->
+  <tr><td style="background:#1C382C;padding:24px 28px;text-align:center;border-radius:0 0 20px 20px">
+    <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#ffffff">Tazizi</p>
+    <p style="margin:0 0 12px;font-size:12px;color:rgba(255,255,255,0.5)">Where Fresh Meets Fast</p>
+    <a href="https://instagram.com/tazizi.ae" style="font-size:12px;color:#BED13A;text-decoration:none;font-weight:600">Follow us @tazizi.ae</a>
+    <p style="margin:12px 0 0;font-size:11px;color:rgba(255,255,255,0.3)">Questions? Reply to this email or reach us at hello@tazizi.ae</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
 
   await transporter.sendMail({
     from: '"Tazizi" <hello@tazizi.ae>',
     to: params.customerEmail,
-    subject: `Order Confirmed — ${params.orderNumber}`,
+    subject: `Tazizi — Order Confirmed — ${params.orderNumber}`,
     html,
   });
 }

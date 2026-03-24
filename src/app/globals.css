@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #CDDB67;
-  --color-brand-dark: #a8b84a;
-  --color-brand-light: #e4ed9e;
-  --color-brand-50: #f6f8e8;
-  --color-cream: #F8F8D1;
-  --color-cream-dark: #f0f0b8;
-  --color-charcoal: #1a1a1a;
+  /* Brand Book Colors */
+  --color-brand: #BED13A;           /* Zesty Lime — primary CTA */
+  --color-brand-dark: #099358;      /* Jungle Green — accent */
+  --color-brand-light: #F8FEC2;     /* Light Lemon Tint */
+  --color-brand-50: #f4fae6;
+  --color-forest: #1C382C;          /* Deep Forest Green — dark bg */
+  --color-cream: #F8FEC2;
+  --color-cream-dark: #e8ef9e;
+  --color-charcoal: #1C382C;        /* Using forest green as primary text */
   --color-charcoal-light: #555555;
   --color-gray-warm: #f7f7f5;
   --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;

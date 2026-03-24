@@ -15,6 +15,7 @@ function OrderSuccessContent() {
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
   const [session, setSession] = useState<SessionInfo | null>(null);
+  const [verifying, setVerifying] = useState(true);
   const { clearCart } = useCart();
 
   useEffect(() => {
@@ -28,9 +29,21 @@ function OrderSuccessContent() {
         .then((data) => {
           if (data.orderNumber) setSession(data);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setVerifying(false));
+    } else {
+      setVerifying(false);
     }
   }, [sessionId]);
+
+  if (verifying) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-[3px] border-gray-200 border-t-brand rounded-full animate-spin" />
+        <p className="text-sm text-charcoal-light">Confirming your payment...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-5">
@@ -72,7 +85,7 @@ function OrderSuccessContent() {
               </svg>
             }
             title="Receipt sent to your email"
-            description={session?.customerEmail ? `Check ${session.customerEmail}` : "Check your inbox for order details"}
+            description={session?.customerEmail ? `Check ${session.customerEmail} (also check spam)` : "Check your inbox (and spam folder) for order details"}
           />
           <StepItem
             icon={

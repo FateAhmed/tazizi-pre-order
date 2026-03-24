@@ -23,7 +23,7 @@ export function Header({ onCartClick, locationName, onChangeLocation }: HeaderPr
               alt="Tazizi"
               width={110}
               height={42}
-              className="w-full h-auto invert"
+              className="w-full h-auto"
               priority
             />
           </div>

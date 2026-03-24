@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createPreOrder, getPreOrderSettings, calculateOrder } from "@/lib/firestore";
+import { createPreOrder, getPreOrderSettings, calculateOrder, getMachine } from "@/lib/firestore";
 import type { PreOrderItem } from "@/lib/types";
 
 function getStripe() {
@@ -65,8 +65,9 @@ export async function POST(req: NextRequest) {
       }),
     }));
 
-    // Get location name (from first item's context or settings)
-    const locationName = locationId; // Will be enriched by machine data later
+    // Resolve location name
+    const machine = await getMachine(locationId);
+    const locationName = machine?.name || locationId;
 
     // 1. Create preOrder doc in Firestore (pending)
     const { orderId, orderNumber } = await createPreOrder({

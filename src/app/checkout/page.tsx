@@ -354,8 +354,8 @@ export default function CheckoutPage() {
                   <span className="font-medium text-charcoal tabular-nums">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-charcoal-light">Delivery</span>
-                  <span className="font-medium text-green-600">Pickup (free)</span>
+                  <span className="text-charcoal-light">Delivery Location</span>
+                  <span className="font-medium text-charcoal">{locationName ? `${locationName} Fridge` : "Your Tazizi Fridge"}</span>
                 </div>
                 {discountApplied && (
                   <div className="flex justify-between text-sm">
@@ -363,7 +363,7 @@ export default function CheckoutPage() {
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>
-                      Weekly discount ({discountPercentage}%)
+                      Discount ({discountPercentage}%)
                     </span>
                     <span className="font-semibold text-brand-dark tabular-nums">-{formatPrice(discountAmount)}</span>
                   </div>
