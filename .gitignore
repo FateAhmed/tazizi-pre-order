@@ -41,9 +41,3 @@ next-env.d.ts
 .env.local
 .claude
 .env.vercel
-
-# Docs & design files
-*.docx
-*.pdf
-Logo.svg
-email-preview.html
